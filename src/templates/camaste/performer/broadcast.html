@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<embed src="{% static 'swf/broadcast.swf' %}"
+       flashvars="server=rtmp://localhost/src&stream=mp4:demo"
+       bgcolor="#ffffff"
+       width="320"
+       height="240"
+       quality="high"
+       allowScriptAccess="always"
+       type="application/x-shockwave-flash"
+       pluginspage="http://www.macromedia.com/go/getflashplayer" />
+TODO: flash widget to do broadcasting and chat
+{% endblock %}

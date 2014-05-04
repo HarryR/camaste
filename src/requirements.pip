@@ -1,0 +1,9 @@
+Django==1.6.4
+South==0.8.4
+
+
+git+git://github.com/dcramer/django-devserver#egg=django-devserver
+sqlparse
+werkzeug
+guppy
+line_profiler

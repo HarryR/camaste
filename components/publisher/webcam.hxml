@@ -1,0 +1,4 @@
+-main Main
+-swf broadcast.swf
+-swf-version 11
+-swf-header 640:480:40:000000

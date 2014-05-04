@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	{% if user.is_authenticated %}
+		{% if user.is_model %}
+			<h2>You are a model, many wows!</h2>
+			<a href="{% url 'broadcast' %}">Broadcast</a>
+		{% else %}
+			<a href="{% url 'performer_signup' %}">Model Signup</a>
+		{% endif %}
+	{% endif %}
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div id="outer-body" class="outer">
+    <div class="inner">
+    	<h2>Login</h2>
+		<form action="" method="post">
+			{% csrf_token %}
+		    {{ form.as_p }}
+		    <input type="submit" value="Login" />
+		</form>
+    </div>
+</div>
+{% endblock %}
