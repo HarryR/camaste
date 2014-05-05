@@ -54,13 +54,26 @@ COMPRESS_HTML                       = TEMPLATE_DEBUG == False
 
 ####################################################################
 #
-# Sessions & CSRF
+# Cache / Sessions
+#
 # See: https://docs.djangoproject.com/en/1.6/topics/http/sessions/
+# Redis: http://niwibe.github.io/django-redis/
 #
 SESSION_EXPIRE_AT_BROWSER_CLOSE     = False
 SESSION_COOKIE_NAME = 'SID'
 CSRF_COOKIE_NAME = 'SCX'
-
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.cache.RedisCache',
+        'LOCATION': '127.0.0.1:6379:1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'redis_cache.client.DefaultClient',
+            #'PASSWORD': 'secretpassword',  # Optional
+        }
+    }
+}
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
 
 
 ####################################################################
@@ -80,6 +93,7 @@ DATABASES = {
         }
     }
 }
+
 
 ####################################################################
 #

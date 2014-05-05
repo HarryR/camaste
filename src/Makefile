@@ -1,4 +1,4 @@
-all: runserver
+all: run
 
 .PHONY: sql
 sql:
@@ -8,8 +8,8 @@ sql:
 shell:
 	./manage.py shell
 
-.PHONY: runserver
-runserver:
+.PHONY: run
+run:
 	./manage.py collectstatic --noinput > /dev/null
 	./manage.py runserver 0.0.0.0:8080
 
