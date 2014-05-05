@@ -1,9 +1,12 @@
 # Layout
 
- * `components/publisher` - Haxe/Flash based webcam streaming app
+ * `components/publisher` - Haxe/Flash based webcam streaming SWF
+ * `components/frontend` - Django based frontend
+ * `components/realtime` - Tornado / Redis based realtime stuff
+ * `components/nginx` - Nginx with rtmp module + config for testing + proxy for frontend & realtime
+ * `components/redis` - Redis server
  * `vagrant` - Vagrant box for running the app in
  * `deploy` - Directory where publicly accessible data goes (for collectstatic & uploads)
- * `src` - Django Frontend app
 
 # TODO:
 

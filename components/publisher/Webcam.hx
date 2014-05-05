@@ -46,17 +46,17 @@ class Webcam {
             this.ns.addEventListener(flash.events.NetStatusEvent.NET_STATUS, onEvent);
 
 
-            this.cam.setQuality(50 * 1024, 0);		// 16 kilobytes per second
-            this.cam.setMode(320, 240, 30, true);	// 320x240, 30fps
-            this.cam.setKeyFrameInterval(15);		// Keyframes twice a second
+            this.cam.setQuality(50 * 1024, 0);      // 16 kilobytes per second
+            this.cam.setMode(320, 240, 30, true);   // 320x240, 30fps
+            this.cam.setKeyFrameInterval(15);       // Keyframes twice a second
 
             var h264settings = new flash.media.H264VideoStreamSettings();
             h264settings.setProfileLevel( flash.media.H264Profile.BASELINE, flash.media.H264Level.LEVEL_3_1 );
-	    this.ns.videoStreamSettings = h264settings;
+           this.ns.videoStreamSettings = h264settings;
             this.ns.publish(this.file,this.share);
 
-	    var metaData:Dynamic = {};
-	    metaData.codec = ns.videoStreamSettings.codec;
+           var metaData:Dynamic = {};
+           metaData.codec = ns.videoStreamSettings.codec;
             metaData.profile = h264settings.profile;
             metaData.level = h264settings.level;
             metaData.fps = this.cam.fps;
@@ -66,7 +66,7 @@ class Webcam {
             metaData.keyFrameInterval = this.cam.keyFrameInterval;
             this.ns.send("@setDataFrame", "onMetaData", metaData);
         }
-	else if (e.info.code == "NetStream.Publish.Start") {
+       else if (e.info.code == "NetStream.Publish.Start") {
             this.ns.attachCamera(this.cam);
             this.ns.attachAudio(this.mic);
             this.ns.bufferTime = 0.5;

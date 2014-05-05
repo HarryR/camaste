@@ -3,4 +3,4 @@ debug:
 
 release:
 	haxe webcam.hxml
-	cp broadcast.swf ../../src/static_app/swf/
+	cp broadcast.swf ../frontend/static_app/swf/

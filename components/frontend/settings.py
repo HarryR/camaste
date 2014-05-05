@@ -1,7 +1,7 @@
 import os, sys
 
 PROJECT_ROOT = os.path.dirname(__file__)
-DEPLOY_ROOT = os.path.join(os.path.dirname(PROJECT_ROOT), 'deploy')
+DEPLOY_ROOT = os.path.join(os.path.dirname(os.path.dirname(PROJECT_ROOT)), 'deploy')
 
 SITE_ID = 1
 DEBUG = True
