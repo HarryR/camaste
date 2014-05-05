@@ -2,14 +2,13 @@ VERSION=1.6.0
 
 all: run
 
-run:
-	mkdir -p logs tmp
-	./start.sh
+run: bin/nginx-$(VERSION)
+	mkdir -p logs tmp/hls
+	./start.sh $(VERSION)
 
-
-bin/nginx: src/nginx-$(VERSION)/objs/nginx
+bin/nginx-$(VERSION): src/nginx-$(VERSION)/objs/nginx
 	mkdir -p bin
-	cp src/nginx-$(VERSION)/objs/nginx bin/
+	cp src/nginx-$(VERSION)/objs/nginx bin/nginx-$(VERSION)
 
 src/nginx-$(VERSION).tar.gz:
 	mkdir -p src
@@ -27,3 +26,7 @@ src/nginx-$(VERSION)/objs/nginx: src/nginx-$(VERSION) src/nginx-rtmp-module
 										   --without-http_memcached_module --without-http_ssi_module \
 										   --with-http_flv_module --with-http_mp4_module
 	make -C src/nginx-$(VERSION)
+
+clean:
+	./stop.sh
+	rm -rf logs src bin proxy_temp fastcgi_temp client_body_temp tmp

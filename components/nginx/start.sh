@@ -1,4 +1,9 @@
 #!/bin/bash
+if [ $# -eq 0 ]; then
+	echo "Usage: start.sh <nginx-version>"
+	exit
+fi
+
 BASE=`dirname $0`
 cd $BASE
 STARTNGINX=0
@@ -14,5 +19,5 @@ else
 fi
 if [ $STARTNGINX -eq 1 ]
 then
-	bin/nginx -p `pwd`
+	bin/nginx-$1 -p `pwd`
 fi

@@ -1,4 +1,9 @@
 #!/bin/bash
+if [ $# -eq 0 ]; then
+	echo "Usage: start.sh <redis-version>"
+	exit
+fi
+
 BASE=`dirname $0`
 cd $BASE
 mkdir -p $BASE/run/
@@ -15,5 +20,5 @@ else
 fi
 if [ $STARTREDIS -eq 1 ]
 then
-	$BASE/bin/redis-server conf/redis.conf
+	$BASE/bin/redis-server-$1 conf/redis.conf
 fi
