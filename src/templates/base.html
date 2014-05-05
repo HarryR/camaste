@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/> 
+    <meta http-equiv="cleartype" content="on">
+
     {% load static from staticfiles %}
     
-	<title>Camaste!</title>
-	<meta http-equiv="cleartype" content="on">
+    <title>Camaste!</title>
 
     {% block header_links %}
 	<link rel="stylesheet" type="text/css" href="{% static 'main.css' %}" />
@@ -16,17 +18,17 @@
     <nav id="top">
         <div class="inner">
             <div class="left">
-                <a href="{% url 'home' %}">DerpyCams</a>
+                <a href="{% url 'home' %}">Powered by Camaste!</a>
             </div>
 
 	       {% if user.is_authenticated %}
             <div class="right">
                 <strong>{{user.username}}</strong>
                 {% if user.is_admin %}
-                | <a href="{% url 'admin:index' %}">Admin</a>
+                    | <a href="{% url 'admin:index' %}">Admin</a>
                 {% endif %}
                 {% if user.is_model %}
-                | <a href="{% url 'performer_home' %}">Model Profile</a>
+                    | <a href="{% url 'performer_home' %}">Model Profile</a>
                 {% endif %}
                 | <a href="{% url 'account' %}">My Account</a>
                 | <a href="{% url 'logout' %}">Logout</a>
@@ -74,7 +76,8 @@
     {% block footer_scripts %}
     <script type="text/javascript" src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
-    <script src="//vjs.zencdn.net/4.5/video.js"></script>
+    <script type="text/javascript" src="//cdn.sockjs.org/sockjs-0.3.min.js"></script>
+    <script type="text/javascript" src="//vjs.zencdn.net/4.5/video.js"></script>
     {% endblock %}
 </body>
 </html>

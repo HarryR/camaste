@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block content %}
+{{request.META}}
 <embed src="{% static 'swf/broadcast.swf' %}"
        flashvars="server=rtmp://localhost/src&stream=mp4:demo"
        bgcolor="#ffffff"
