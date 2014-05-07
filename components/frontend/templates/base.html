@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="no-js">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/> 
+    <meta charset="utf-8"> 
     <meta http-equiv="cleartype" content="on">
 
     {% load static from staticfiles %}
@@ -75,8 +75,9 @@
 
     {% block footer_scripts %}
     <script type="text/javascript" src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/stapes.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
-    <script type="text/javascript" src="//cdn.sockjs.org/sockjs-0.3.min.js"></script>
+    <script type="text/javascript" src="//cdn.sockjs.org/sockjs-0.3.min.js"></script>    
     <script type="text/javascript" src="//vjs.zencdn.net/4.5/video.js"></script>
     {% endblock %}
 </body>

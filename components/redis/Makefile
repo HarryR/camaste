@@ -4,11 +4,15 @@ REDIS_TAR=$(REDIS_DIR).tar.gz
 REDIS_URL=http://download.redis.io/releases/$(REDIS_TAR)
 REDIS_BLD_DIR=src/$(REDIS_DIR)/src
 
-all: run
+all: start
 
-.PHONY: run
-run: bin/redis-server-$(REDIS_VER)
+.PHONY: start
+start: bin/redis-server-$(REDIS_VER)
 	./start.sh $(REDIS_VER)
+
+.PHONY: stop
+stop:
+	./stop.sh
 
 bin/redis-server-$(REDIS_VER): src/$(REDIS_DIR)/src/redis-server
 	if [ -d bin ]; then mkdir -p bin; fi	
@@ -26,6 +30,5 @@ src/$(REDIS_DIR)/src/redis-server: src/$(REDIS_TAR)
 	if [ ! -d src/$(REDIS_DIR) ]; then mkdir -p src && cd src && tar -xf $(REDIS_TAR); fi	
 	cd src/$(REDIS_DIR) && make
 
-clean:
-	./stop.sh
+clean: stop
 	rm -rf bin run src

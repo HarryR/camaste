@@ -60,8 +60,8 @@ COMPRESS_HTML                       = TEMPLATE_DEBUG == False
 # Redis: http://niwibe.github.io/django-redis/
 #
 SESSION_EXPIRE_AT_BROWSER_CLOSE     = False
-SESSION_COOKIE_NAME = 'SID'
-CSRF_COOKIE_NAME = 'SCX'
+SESSION_COOKIE_NAME = 'UNICORNS'
+CSRF_COOKIE_NAME = 'PIRATES'
 CACHES = {
     'default': {
         'BACKEND': 'redis_cache.cache.RedisCache',

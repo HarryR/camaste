@@ -1,10 +1,15 @@
 VERSION=1.6.0
 
-all: run
+all: start
 
-run: bin/nginx-$(VERSION)
+.PHONY: start
+start: bin/nginx-$(VERSION)
 	mkdir -p logs tmp/hls
 	./start.sh $(VERSION)
+
+.PHONY: stop
+stop:
+	./stop.sh
 
 bin/nginx-$(VERSION): src/nginx-$(VERSION)/objs/nginx
 	mkdir -p bin
@@ -27,6 +32,5 @@ src/nginx-$(VERSION)/objs/nginx: src/nginx-$(VERSION) src/nginx-rtmp-module
 										   --with-http_flv_module --with-http_mp4_module
 	make -C src/nginx-$(VERSION)
 
-clean:
-	./stop.sh
+clean: stop
 	rm -rf logs src bin proxy_temp fastcgi_temp client_body_temp tmp
