@@ -51,12 +51,36 @@ var Camaste_Realtime = Stapes.subclass({
         this._shutting_down = false;
         this._active = {};
         this._queued = [];
+        this._reconnect_fails = 0;
+        this._reconnect_timer = null;
 
         var self = this;
         app.on('shutdown', function () {
+            self._clear_reconnect_timer();            
             self._shutting_down = true;
             self.close();
         })
+    },
+
+    _clear_reconnect_timer: function () {
+        if( self._reconnect_timer != null ) {
+            clearTimeout(self._reconnect_timer);
+            self._reconnect_timer = null;
+        }
+    },
+
+    /**
+     * Try to reconnect, but back off slowly so we don't hammer the server too hard.
+     */
+    _reconnect: function () {
+        self._reconnect_fails += 1;
+        if( self._shutting_down == false ) {
+            var i = Math.min(self._reconnect_fails, 20);
+            var timeout = Math.round(Math.log(i)*Math.log(i+1)*1000);                
+            self._reconnect_timer = setTimeout(function(){
+                self._connect();
+            }, timeout);       
+        }
     },
 
     /**
@@ -67,20 +91,26 @@ var Camaste_Realtime = Stapes.subclass({
         if( this._shutting_down == false && this._sjs == null ) {
             var sjs = new SockJS('//' + window.location.host + '/realtime');
             var self = this;
+            // Setup handlers for SockJS
             sjs.onopen = function () {
-                self.emit('sockjs.open', sjs);
                 self._is_open = true;
+                self._reconnect_fails = 0;
                 self._tick();
+                self._clear_reconnect_timer();
+                self.emit('connect');
             };
-            sjs.onclose = function () {
-                self.emit('sockjs.close', sjs);
+            sjs.onclose = function (info) {
                 self._is_open = false;
                 self._sjs = null;
-                self._connect();             
+                self._reconnect();
+                self.emit('disconnect');
             }
-            sjs.onmessage = function (msg) {
-                self.emit('sockjs.msg', msg);
+            sjs.onmessage = function (msg) {                
                 self._on_msg(msg);
+            }
+            sjs.onheartbeat = function () {
+                self._tick();
+                self.emit('heartbeat');
             }
             this._sjs = sjs;
         }
@@ -89,51 +119,47 @@ var Camaste_Realtime = Stapes.subclass({
 
     /**
      * Handle messages coming through our SockJS endpoint from the Realtime server
+     *
+     * Message format is
+     *  {"id": "message id, in _active[..]",
+     *   "_": > 0 = success, <= 0 = failure,
+     *   ...}
+     *
+     * If no "_" key exists or it is 0 or negative the response is considered to be
+     * an error. If the "id" isn't found in `this._active` then it's presumed the 
+     * server is sending us an event.
      */
     _on_msg: function (raw_msg) {
         if( raw_msg.type != "message" ) {
             return;
         }
-
         var msg = null;
-        try {
-            msg = JSON.parse(raw_msg.data);
+        try { msg = JSON.parse(raw_msg.data); }
+        catch( e ) {
+            // JSON parse error?... aint much we can do here
         }
-        catch( e ) { /* JSON parse error?... aint much we can do here */ }
-
+        // Message passes some basic validations
         if( msg instanceof Object && 'id' in msg && typeof(msg.id) == "string" )  {
+            var rpc = null;
             // The ID is a known 'active' message
             if( msg.id in this._active ) {
-                var rpc = this._active[msg.id];
+                rpc = this._active[msg.id];
                 delete this._active[msg.id];
-
-                // When we get a reply like {_:1, ...} then call the 'ok' handler
-                if( '_' in msg && msg._ ) {
-                    if( rpc.ok ) {
-                        rpc.ok(msg, rpc);
-                    }
-                    this.emit(msg.id, msg);                    
-                }
-                // Otherwise call the 'error' handler
-                else {
-                    if( rpc.err ) {
-                        rpc.err(msg, rpc);
-                    }
-                    this.emit(rpc.id + '.error', msg);                    
+                if( rpc.tmr != null ) {
+                    clearTimeout(rpc.tmr);
                 }
             } 
-            // The ID is unknown - we still emit events
-            else {
-                // When we get a reply like {_:1, ...} then call the 'ok' handler
-                if( '_' in msg && msg._ > 0 ) {
-                    this.emit(msg.id, msg);                    
+            // Dispatch events & success/error handlers if _ is > 0
+            if( '_' in msg && Math.round(msg._) > 0 ) {
+                if( rpc && rpc.ok ) {
+                    rpc.ok(msg, rpc);
                 }
-                // Otherwise call the 'error' handler
-                else {
-                    this.emit(rpc.id + '.error', msg);                    
-                }                        
+                this.emit(msg.id, msg);
             }
-            
+            // If _ is 0 or negative, or doesn't exist - it's an error!
+            else if( rpc && rpc.err ) {
+                rpc.err(msg, rpc);
+            }            
         }
     },
 
@@ -166,6 +192,9 @@ var Camaste_Realtime = Stapes.subclass({
             if( this._shutting_down ) {                
                 for (var i=0, tot=this._queued.length; i < tot; i++) {
                     var rpc = this._queued[i]; 
+                    if( rpc.tmr != null ) {
+                        clearTimeout(rpc.tmr);
+                    }
                     if( rpc.err ) {
                         rpc.err("shutdown");
                     }
@@ -187,12 +216,18 @@ var Camaste_Realtime = Stapes.subclass({
             if( rpc.err ) {
                 rpc.err("timeout");
             }
-            this.emit(rpc.id + ".timeout", "timeout");
+            this.emit(rpc.id + ".timeout", rpc);
         }
     },
 
+    /**
+     * Enqueue an RPC call
+     */
     call: function (name, args, success, error, timeout) {
-        if( this._shutting_down == false ) {            
+        if( this._shutting_down == false ) {         
+            // Id's start with _ to distinguish them from events being
+            // passed back to the app. The server will never pass
+            // events back starting with _ - only call responses.   
             var id = "_" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".random(10);
             var timeout_cb = null;
             if( timeout ) {
@@ -263,7 +298,7 @@ window.Camaste = new Camaste_Core();
 
 $(function (){
     var do_call = function (self) {
-        Camaste.realtime.call("echo", {"derp": 123}, function () {
+        Camaste.realtime.call("echo", {"handler": false, "derp": 123}, function () {
             setTimeout(function(){
                 self(self);
             }, 100);

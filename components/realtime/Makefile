@@ -1,4 +1,5 @@
 all:
 
+.PHONY: start
 start:
-	./server.py
+	python -mrealtime
