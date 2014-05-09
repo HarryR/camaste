@@ -38,28 +38,45 @@ class RedisSubscriber(object):
 
 
     def _on_message(self, msg):
-        if not msg:
-            return
-        if msg.kind == 'disconnect':
-            self.close()
-        else:
-            if msg.body is not None:
-                # XXX: handle ValueError...
-                msg.body = json.loads(msg.body)
-            if isinstance(msg.channel, (set,list,tuple)):
-                channels = msg.channel
+        try:
+            if not msg:
+                return
+            if msg.kind == 'disconnect':
+                self.close()
             else:
-                channels = set([msg.channel])
-            for channel in channels:
-                if channel in self.subs:
-                    msg.channel = channel
-                    for obj, callback in self.subs[msg.channel].items():
-                        callback(obj, msg)
+                if msg.body is not None:
+                    # XXX: handle ValueError...
+                    try:
+                        msg.body = json.loads(msg.body)                
+                    except ValueError:
+                        LOGGER.exception("_on_message: Failed to json.loads %r", msg)
+                if isinstance(msg.channel, (set, list, tuple)):
+                    channels = msg.channel
+                else:
+                    channels = set([msg.channel])
+                # Run callbacks for all the channels the message was sent to
+                for channel in channels:
+                    if channel in self.subs:
+                        msg.channel = channel
+                        for obj, callback in self.subs[msg.channel].items():
+                            try:
+                                callback(obj, msg)
+                            except:
+                                # So... callback fails, still gotta process the rest of them
+                                LOGGER.exception("_on_message: error calling %s for %s", callback, obj)
+        except:
+            # This really shouldn't happen, but we have to catch
+            # otherwise it could terminate the app.
+            LOGGER.exception("_on_message: unknown error!")
 
 
     def close(self):
+        """
+        Unsubscribe from all channels
+        """
         for channel in self.subs.keys():
             self.redis.unsubscribe(channel)
+        # TODO: stop redis listener...
         self.subs = {}
 
 
@@ -80,6 +97,7 @@ class RedisSubscriber(object):
                     LOGGER.debug('_publish_channel: Internal publish channel:%s target:%s msg:%s', channel, obj, json_encoded_msg)
                 callback(obj, pubsub_msg)
 
+
     def publish(self, channels, obj):
         """
         Pubishes the object to the channel.
@@ -87,21 +105,23 @@ class RedisSubscriber(object):
         """
         assert isinstance(obj, dict)
         json_encoded_obj = json.dumps(obj)
-        if not isinstance(channels,(list,set,tuple)):
+        if not isinstance(channels, (list, set, tuple)):
             channels = [channels]
         for channel in channels:
-            assert isinstance(channel, (str,unicode))
+            assert isinstance(channel, (str, unicode))
             self._publish_channel(channel, obj, json_encoded_obj)
 
 
     def _subscribe_channel(self, channel, obj, callback):
-        assert isinstance(channel, (str,unicode))
+        assert isinstance(channel, (str, unicode))
         no_subs_for_channel = channel not in self.subs
         if no_subs_for_channel:
-            self.subs[channel] = {}
-        callback = stack_context.wrap(callback)
+            self.subs[channel] = {}                
         self.subs[channel][obj] = callback    
         if not self.redis.subscribed:
+            # XXX: we might not be the only people listening on Redis...            
+            # Also we need to kill the redis listener when we close
+            # how to do this?
             if self.extra_debug:
                 LOGGER.debug("_subscribe_channel: Redis subscription listener started")
             self.redis.listen(self._on_message)
@@ -110,13 +130,16 @@ class RedisSubscriber(object):
                 LOGGER.debug("_subscribe_channel: redis.subscribe('%s')", channel)
             self.redis.subscribe(channel)
 
+
     def subscribe(self, channels, obj, callback):
         """
         Subscribes an object to a channel
         """
         assert obj is not None
         assert callable(callback)
-        if not isinstance(channels,(list,set,tuple)):
+        # Wrapping the callback makes it look like it came from here
+        callback = stack_context.wrap(callback)
+        if not isinstance(channels, (list, set, tuple)):
             channels = [channels]
         for channel in channels:
             self._subscribe_channel(channel, obj, callback)
@@ -135,11 +158,14 @@ class RedisSubscriber(object):
                 self.redis.unsubscribe(channel)
 
     def unsubscribe(self, channels, obj):
+        """
+        Unsubscribe an object from a channel
+        """
         assert obj is not None
-        if not isinstance(channels,(list,set,tuple)):
+        if not isinstance(channels, (list, set, tuple)):
             channels = [channels]
         for channel in channels:
-            assert isinstance(channel, (str,unicode))
+            assert isinstance(channel, (str, unicode))
             self._unsubscribe_channel(channel, obj)
 
 
@@ -166,13 +192,25 @@ class EndUserConnection(sockjs.tornado.SockJSConnection):
         self._app = app
         self._close_callbacks = []
         self._channels = {}
+        self._info = None
+
+
+    @property
+    def ip(self):
+        if 'X-Real-Ip' in self._info.headers:
+            return self._info.headers['X-Real-Ip']
+        if 'X-Forwarded-For' in self._info.headers:
+            return self._info.headers['X-Forwarded-For']
+        return self._info.ip
 
 
     def on_open(self, conn_info):
         """
         Called by SockJSConnection when connection is initialised 
         """
-        self.conn_info = conn_info
+        print conn_info.__dict__
+        self._info = conn_info
+        LOGGER.info("%s: connected", self.ip)
 
 
     def on_close(self):        
@@ -183,6 +221,7 @@ class EndUserConnection(sockjs.tornado.SockJSConnection):
             callback(self)
         for channel in self._channels.keys():
             self.unsubscribe(channel)
+        LOGGER.info("%s: disconnected", self.ip)
 
 
     def publish(self, channels, obj):
@@ -212,7 +251,7 @@ class EndUserConnection(sockjs.tornado.SockJSConnection):
         self._close_callbacks.append(callback)
 
 
-    def ok(self, token, response, status=1):
+    def reply(self, token, response, status=1):
         """
         Respond successfully to the message
         """
@@ -252,22 +291,22 @@ class EndUserConnection(sockjs.tornado.SockJSConnection):
         try:
             msg = json.loads(raw_msg)
         except ValueError:            
-            LOGGER.debug("%s: _parse_msg: Could not json.loads(raw_msg)", self.conn_info.ip)
+            LOGGER.debug("%s: _parse_msg: Could not json.loads(raw_msg)", self.ip)
             return
         if not isinstance(msg, dict):
-            LOGGER.debug("%s: _parse_msg: message is not dict", self.conn_info.ip)
+            LOGGER.debug("%s: _parse_msg: message is not dict", self.ip)
             return        
         if len(msg) != 3 or 'id' not in msg or 'call' not in msg or 'args' not in msg:            
-            LOGGER.debug("%s: _parse_msg: message doesnt have right keys", self.conn_info.ip)
+            LOGGER.debug("%s: _parse_msg: message doesnt have right keys", self.ip)
             return            
-        if not isinstance(msg['id'], (str,unicode)):
-            LOGGER.debug("%s: _parse_msg: id is not string...", self.conn_info.ip)
+        if not isinstance(msg['id'], (str, unicode)):
+            LOGGER.debug("%s: _parse_msg: id is not string...", self.ip)
             return
         if not isinstance(msg['args'], (dict,)):
-            LOGGER.debug("%s: _parse_msg: args is not dict", self.conn_info.ip)
+            LOGGER.debug("%s: _parse_msg: args is not dict", self.ip)
             return self.error(msg['id'], {'args': 'Invalid'})
         if len(msg['args']) > 20:
-            LOGGER.debug("%s: _parse_msg: too many args", self.conn_info.ip)
+            LOGGER.debug("%s: _parse_msg: too many args", self.ip)
             return self.error(msg['id'], {'args': 'Too Many'})       
         return msg
 
@@ -280,22 +319,21 @@ class EndUserConnection(sockjs.tornado.SockJSConnection):
         try:
             msg = self._parse_msg(raw_msg)        
             if not msg:            
-                return            
-            if msg['call'] in self._app._cmds:
-                method = self._app._cmds[msg['call']]
-                LOGGER.debug("%s: on_message: %s(%s)", self.conn_info.ip, msg['call'], json.dumps(msg['args']))
-            else:
-                LOGGER.warning("%s: on_message: unknown call '%s'", self.conn_info.ip, msg['call'])
+                return       
+            method = self._app.command(msg['call'])
+            if not method:
+                LOGGER.warning("%s: on_message: unknown call '%s'", self.ip, msg['call'])
                 return self.error(msg['id'], {'call': 'Unknown'})
+            #LOGGER.debug("%s: on_message: %s(%s)", self.ip, msg['call'], json.dumps(msg['args']))
             try:
                 kwargs = msg['args']
                 response = method(self, **kwargs)            
                 if response is not None:
                     assert isinstance(response, dict)
-                    self.ok(msg['id'], response)
+                    self.reply(msg['id'], response)
             except:
                 # Catch-all exception handler, send back generic 'Server Error'
-                LOGGER.exception("%s: on_message: exception on '%s' call", self.conn_info.ip, msg['call'])
+                LOGGER.exception("%s: on_message: exception on '%s' call", self.ip, msg['call'])
                 self.error(msg['id'], {'call': 'Server Error'})
         except:
             # So.. just incase _parse_msg errors out.. or something! Don't crash... please don't crash...
@@ -315,32 +353,44 @@ d8'   .8P 88.  ... 88       88 .88'  88.  ... 88
 """                                                                                                   
 class RealtimeServer(object):
     def __init__(self, conf):
+        self._cmds = {}
         self.conf = conf        
-
         self.redis = tornadoredis.Client(conf['redis_host'], conf['redis_port'])
         self.sub = RedisSubscriber(self.redis)
 
-        self.sockjs_router = sockjs.tornado.SockJSRouter(self.make_request, '/realtime')
+        make_connection = lambda session: EndUserConnection(self, session)
+        self.sockjs_router = sockjs.tornado.SockJSRouter(make_connection, '/realtime')
         self.tornado_app = tornado.web.Application(self.sockjs_router.urls)
         self.http_server = tornado.httpserver.HTTPServer(self.tornado_app)
 
-        self._cmds = {}
+
+    def command(self, name):
+        """
+        Retrieve a registered command by name
+        """
+        return self._cmds.get(name)
 
 
     def register(self, cmd, callback):
+        """
+        Register an RPC command
+        """
         assert cmd is not None
         assert callable(callback)
         self._cmds[cmd] = callback
         LOGGER.debug("Registered command '%s' to %s", cmd, callback)
 
 
-    def make_request(self, session):
-        return EndUserConnection(self, session)        
-
-
     def run(self):
+        """
+        Start the HTTP server and Tornado IO loop
+        """
         self.http_server.listen(self.conf['http_port'], self.conf['http_host'])
         LOGGER.info('Camaste! Realtime @ http://%s:%d/realtime', self.conf['http_host'], self.conf['http_port'])
-        tornado.ioloop.IOLoop.instance().start()
+        try:
+            tornado.ioloop.IOLoop.instance().start()            
+        except KeyboardInterrupt:
+            LOGGER.info('Stopping...')
+            tornado.ioloop.IOLoop.instance().stop()
 
 

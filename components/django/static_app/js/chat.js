@@ -20,6 +20,9 @@ var Camaste_Chat = Stapes.subclass({
 			$('.input-text', $element).focus();
 			self.scroll_to_bottom();
 		});
+		app.on('chat.msg', function(msg){
+			self.add_line(msg.body.text)
+		});
 
 		$('.input-send', this.$el).on('click', function () {
 			self.input_submit();
@@ -34,8 +37,8 @@ var Camaste_Chat = Stapes.subclass({
 	},
 
 	connect: function () {
-		this.app.realtime.call('room.join', {
-			"room": "test"
+		this.app.realtime.call('chat.join', {
+			"token": "test"
 		});
 	},
 
@@ -49,11 +52,11 @@ var Camaste_Chat = Stapes.subclass({
 		var message = $('<span />').append( $('<span />').addClass('username').text('You Wrote') )
 								   .append( $('<span />').addClass('text').text(val) );
 		$input.val('').focus();
-		this.add_line(message);
+		//this.add_line(message);
 
-		this.app.realtime.call('room.send', {
-			"room": "test",
-			"msg": val
+		this.app.realtime.call('chat.sendmsg', {
+			"token": "test",
+			"text": val
 		});
 	},
 

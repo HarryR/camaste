@@ -3,7 +3,7 @@ import argparse, sys, re
 import logging
 import logging.config
 from . import RealtimeServer
-from .apps import RoomsApp
+from .apps import ChatApp
 
 def test_echo(conn, **kwargs):
     return kwargs
@@ -54,7 +54,7 @@ def main():
         logging.config.fileConfig(args['logging'])
 
     server = RealtimeServer(args)
-    RoomsApp(server)
+    ChatApp(server)
     server.register('test.echo', test_echo)
     server.run()
     return 0

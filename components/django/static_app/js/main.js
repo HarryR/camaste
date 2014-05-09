@@ -53,6 +53,7 @@ var Camaste_Realtime = Stapes.subclass({
         this._queued = [];
         this._reconnect_fails = 0;
         this._reconnect_timer = null;
+        this._app = app;
 
         var self = this;
         app.on('shutdown', function () {
@@ -154,7 +155,7 @@ var Camaste_Realtime = Stapes.subclass({
                 if( rpc && rpc.ok ) {
                     rpc.ok(msg, rpc);
                 }
-                this.emit(msg.id, msg);
+                this._app.emit(msg.id, msg);
             }
             // If _ is 0 or negative, or doesn't exist - it's an error!
             else if( rpc && rpc.err ) {
@@ -216,7 +217,7 @@ var Camaste_Realtime = Stapes.subclass({
             if( rpc.err ) {
                 rpc.err("timeout");
             }
-            this.emit(rpc.id + ".timeout", rpc);
+            this._app.emit(rpc.id + ".timeout", rpc);
         }
     },
 
