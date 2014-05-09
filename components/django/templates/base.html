@@ -19,7 +19,7 @@
         <div class="inner">
             <div class="left">
                 <a href="{% url 'home' %}">Powered by Fail&trade;</a>
-            </div>
+            </div><!-- .left -->
 
 	       {% if user.is_authenticated %}
             <div class="right">
@@ -32,12 +32,12 @@
                 {% endif %}
                 | <a href="{% url 'account' %}">My Account</a>
                 | <a href="{% url 'logout' %}">Logout</a>
-            </div>
+            </div><!-- .right -->
             {% else %}
             <div class="right">
                 <a href="/register">Register</a>
                 | <a href="/login">Login</a>
-            </div>
+            </div><!-- .right -->
             {% endif %}
             <div class="clear"></div>
         </div><!-- .inner -->
@@ -69,16 +69,23 @@
             <div class="copyright">
                 Copyright &copy; Derp Herp Merp Werp
             </div>
-        </div>
+        </div><!-- #footer -->
     </footer><!-- #bottom -->
 
 
     {% block footer_scripts %}
-    <script type="text/javascript" src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/stapes.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
-    <script type="text/javascript" src="//cdn.sockjs.org/sockjs-0.3.min.js"></script>    
-    <script type="text/javascript" src="//vjs.zencdn.net/4.5/video.js"></script>
+        {# TODO: minify all the JS into one file #}
+        <!-- Core Stuff -->
+        <script type="text/javascript" src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/stapes.min.js' %}"></script>
+
+        <!-- Third party components -->
+        <script type="text/javascript" src="//cdn.sockjs.org/sockjs-0.3.min.js"></script>    
+        <script type="text/javascript" src="//vjs.zencdn.net/4.5/video.js"></script>
+
+        <!-- Camaste stuff -->
+        <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/chat.js' %}"></script>
     {% endblock %}
 </body>
 </html>

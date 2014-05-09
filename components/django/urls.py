@@ -8,6 +8,7 @@ admin.autodiscover()
 urlpatterns = patterns('',
 	url(r'^admin/', include(admin.site.urls)),
 	url(r'^', include('camaste.urls',)),
+	url(r'^backend/', include('backend.urls', namespace='backend')),
 )
 
 if settings.DEBUG:

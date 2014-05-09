@@ -108,7 +108,9 @@ INSTALLED_APPS = (
 	'django.contrib.admin',
 	'django.contrib.humanize',
 	'south',
+
     'camaste',
+    'backend',
 )
 if DEBUG:
     INSTALLED_APPS += ('devserver',)

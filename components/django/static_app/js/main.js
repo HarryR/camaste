@@ -280,6 +280,7 @@ var Camaste_Core = Stapes.subclass({
 
     _on_ready: function () {
         $('html').removeClass('no-js').addClass('js');
+        this.emit('ready');
     },
 
     shutdown: function () {

@@ -20,7 +20,7 @@ ssh:
 start-components:
 	make -C components/nginx
 	make -C components/redis
-	make -C components/frontend
+	make -C components/django
 
 .PHONY: stop-components
 stop-components:
