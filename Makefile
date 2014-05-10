@@ -26,3 +26,6 @@ start-components:
 stop-components:
 	make -C components/nginx stop
 	make -C components/redis stop
+
+cleandeploy:
+	rm -rf deploy/static && mkdir -p deploy/static

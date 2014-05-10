@@ -4,12 +4,13 @@
     <meta charset="utf-8"> 
     <meta http-equiv="cleartype" content="on">
 
+    {% load compressed %}
     {% load static from staticfiles %}
     
     <title>Camaste!</title>
 
     {% block header_links %}
-	<link rel="stylesheet" type="text/css" href="{% static 'main.css' %}" />
+        {% compressed_css 'styles' %}
     {% endblock %}
 </head>
 
@@ -73,15 +74,7 @@
 
 
     {% block footer_scripts %}
-        {# TODO: minify all the JS into one file #}
-        <!-- Core Requirements -->
-        <script type="text/javascript" src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/stapes.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/sockjs-0.3.4.min.js' %}"></script>    
-
-        <!-- Camaste stuff -->
-        <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/chat.js' %}"></script>
+        {% compressed_js 'scripts' %}        
     {% endblock %}
 </body>
 </html>

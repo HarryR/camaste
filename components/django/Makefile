@@ -10,6 +10,7 @@ shell:
 
 .PHONY: run
 run:
+	mkdir -p ../../deploy/static/
 	./manage.py collectstatic --noinput > /dev/null
 	./manage.py runserver 0.0.0.0:8080
 

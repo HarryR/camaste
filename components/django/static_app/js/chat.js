@@ -8,7 +8,6 @@ d8'   `88 88                  88
 Y8.   .88 88    88 88.  .88   88   
  Y88888P' dP    dP `88888P8   dP   
 */
-
 var Camaste_Chat = Stapes.subclass({
 	constructor: function (app, $element) {
 		this.app = app;

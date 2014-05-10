@@ -1,15 +1,14 @@
-import argparse, sys, re
-
-import logging
+import argparse, sys, re, logging
 import logging.config
+
 from . import RealtimeServer
 from .apps import ChatApp
 
-def test_echo(conn, **kwargs):
-    return kwargs
-
 
 def is_valid_hostname(hostname):
+    """
+    Is the string a possibly valid hostname or IP?
+    """
     if len(hostname) > 255:
         return False
     if hostname[-1] == ".":
@@ -19,15 +18,22 @@ def is_valid_hostname(hostname):
 
 
 class HostnameAction(argparse.Action):
+    """
+    VAlidates a hostname or IP argument
+    """
     def __call__(self, parser, namespace, values, option_string=None):
         if len(values) > 1:
             raise argparse.ArgumentError(self, "can only accept 1 hostname")
         value = values[0]
         if not is_valid_hostname(value):
-            raise argparse.ArgumentError(self, "invalid hostnaem or ip")
+            raise argparse.ArgumentError(self, "invalid hostname or ip")
         setattr(namespace, self.dest, value)
 
+
 class TcpIpPortAction(argparse.Action):
+    """
+    Validates a TCP/IP port argument
+    """
     def __call__(self, parser, namespace, values, option_string=None):        
         if len(values) > 1:
             raise argparse.ArgumentError(self, "can only accept 1 port")
@@ -55,9 +61,9 @@ def main():
 
     server = RealtimeServer(args)
     ChatApp(server)
-    server.register('test.echo', test_echo)
     server.run()
     return 0
+    
     
 if __name__ == '__main__':
     sys.exit(main())

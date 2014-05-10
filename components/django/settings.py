@@ -6,18 +6,18 @@ DEPLOY_ROOT = os.path.join(os.path.dirname(os.path.dirname(PROJECT_ROOT)), 'depl
 SITE_ID = 1
 DEBUG = True
 TEMPLATE_DEBUG = False
+ALLOWED_HOSTS = ['*']
 
 
 ####################################################################
 #
-# Paths
+# Paths and Static files
 #
 sys.path.insert(0, os.path.join(PROJECT_ROOT, "apps"))
 MEDIA_ROOT                          = os.path.join(DEPLOY_ROOT, 'media')
 MEDIA_URL                           = '/media/'
 STATIC_ROOT                         = os.path.join(DEPLOY_ROOT, 'static')
 STATIC_URL                          = '/static/'
-
 
 STATICFILES_DIRS = (
     os.path.join(PROJECT_ROOT, 'static_app'),
@@ -26,10 +26,38 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.DefaultStorageFinder',
-    #'compressor.finders.CompressorFinder',
+    'pipeline.finders.CachedFileFinder',
 )
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.CachedStaticFilesStorage'
+
+STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
     
+PIPELINE_CSS_COMPRESSOR = 'pipeline.compressors.csstidy.CSSTidyCompressor'
+PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.uglifyjs.UglifyJSCompressor'
+
+PIPELINE_CSS = {
+    'styles': {
+        'source_filenames': (
+          'main.css',
+        ),
+        'output_filename': 'css/main.min.css',
+        'extra_context': {
+            'media': 'screen,projection',
+        },
+    },
+}
+
+PIPELINE_JS = {
+    'scripts': {
+        'source_filenames': (
+            'js/jquery-1.11.1.min.js',
+            'js/sockjs-0.3.4.min.js',
+            'js/stapes.min.js',
+            'js/main.js',
+            'js/chat.js',
+        ),
+        'output_filename': 'main.min.js',
+    }
+}
 
 
 ####################################################################
@@ -108,12 +136,14 @@ INSTALLED_APPS = (
 	'django.contrib.admin',
 	'django.contrib.humanize',
 	'south',
+    'pipeline',
 
     'camaste',
     'backend',
 )
 if DEBUG:
     INSTALLED_APPS += ('devserver',)
+
 MIDDLEWARE_CLASSES = (
 	'django.middleware.common.CommonMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -125,7 +155,9 @@ MIDDLEWARE_CLASSES = (
     #'django.middleware.transaction.TransactionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
 
+    # Note: our HTML minifier is better than Pipeline's
     'camaste.middleware.MinifyHTMLMiddleware',
+    #'pipeline.middleware.MinifyHTMLMiddleware',
 )
 
 ####################################################################

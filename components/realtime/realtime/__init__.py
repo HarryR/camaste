@@ -157,6 +157,7 @@ class RedisSubscriber(object):
                 del self.subs[channel]
                 self.redis.unsubscribe(channel)
 
+
     def unsubscribe(self, channels, obj):
         """
         Unsubscribe an object from a channel
@@ -193,10 +194,25 @@ class EndUserConnection(sockjs.tornado.SockJSConnection):
         self._close_callbacks = []
         self._channels = {}
         self._info = None
+        self._state = None
+
+    def get(self, name, default=None):
+        return self._state.get(name, default)
+
+
+    def has(self, name):
+        return name in self._state
+
+
+    def set(self, name, value):
+        return self._state.set(name, value)
 
 
     @property
     def ip(self):
+        """
+        Return the end-users IP address
+        """
         if 'X-Real-Ip' in self._info.headers:
             return self._info.headers['X-Real-Ip']
         if 'X-Forwarded-For' in self._info.headers:
@@ -208,7 +224,6 @@ class EndUserConnection(sockjs.tornado.SockJSConnection):
         """
         Called by SockJSConnection when connection is initialised 
         """
-        print conn_info.__dict__
         self._info = conn_info
         LOGGER.info("%s: connected", self.ip)
 
