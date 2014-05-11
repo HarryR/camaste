@@ -297,14 +297,3 @@ var Camaste_Core = Stapes.subclass({
 
 
 window.Camaste = new Camaste_Core();
-
-$(function (){
-    var do_call = function (self) {
-        Camaste.realtime.call("echo", {"handler": false, "derp": 123}, function () {
-            setTimeout(function(){
-                self(self);
-            }, 100);
-        });
-    };
-    do_call(do_call);
-});

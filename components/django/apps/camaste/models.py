@@ -317,3 +317,8 @@ def RoomMember__post_save(sender, instance, created, **kwargs):
         }
         pipe.hset(members_key, instance.account.pk, json.dumps(member_data))
     pipe.execute()
+
+
+
+
+    

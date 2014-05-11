@@ -107,8 +107,8 @@ body {
 }
 
 header > .inner, nav > .inner, footer > .inner,
-#outer-body > .inner {
-	width: 800px;
+#outer-body > .inner, body > section > .block{
+	width: 900px;
 	margin: 0 auto;
 }
 
@@ -166,8 +166,21 @@ footer#bottom {
 }
 
 
+section.content {
+    background: #fff;
+}
 
 
+/* ------------------------------------------------- */
+
+
+#cam-and-chat .widget-cam {
+    float: left;
+}
+
+#cam-and-chat .widget-chat {
+    float: right;
+}
 
 
 
@@ -175,8 +188,8 @@ footer#bottom {
 /* ------------------------------------------------- */
 
 #chat {
-    width: 640px;
-    height: 480px;
+    width: 400px;
+    height: 375px;
 }
 
 .widget-chat {
@@ -252,7 +265,7 @@ footer#bottom {
         height: 30px;
         padding: 0;
         padding-left: 1em;
-        width: 78%;
+        width: 255px;
         border: 1px #f5f5f5 inset;
     }
 

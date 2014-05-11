@@ -1,23 +1,33 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block content %}
+<section class="content" id="page-home">
+
 	{% if user.is_authenticated %}
-		{% if user.is_model %}
-			<h2>You are a model, many wows!</h2>
-			<a href="{% url 'broadcast' %}">Broadcast</a>
-		{% else %}
-			<a href="{% url 'performer_signup' %}">Model Signup</a>
-		{% endif %}
+	{% if user.is_model %}
+		<h2>You are a model, many wows!</h2>
+		<a href="{% url 'broadcast' %}">Broadcast</a>
+	{% else %}
+		<a href="{% url 'performer_signup' %}">Model Signup</a>
+	{% endif %}
+
+	<div id="cam-and-chat" class="block">
+		<div class="widget-cam">
+			<img src="{% static 'test/test.jpg' %}" width="500" />
+		</div><!-- .widget-cam -->
 
 		<div id="chat" class="widget-chat">
 			<div class="status">
+				{# Status bar contains stuff like credits, room name #}
 				<div class="status-timer">
 					184 credits left
 				</div>
 				<div class="status-title">
 					Private session with <span class="modelname">NorthernScally</span>
 				</div>
-			</div>
+			</div><!-- .status -->
 
 			<div class="history">
 				<ul class="history-lines"></ul>
@@ -29,6 +39,11 @@
 					Send
 				</div>
 			</div>
-		</div><!-- #chat -->
+		</div><!-- #chat .widget-chat -->
+
+		<div class="clear"></div>
+	</div><!-- #cam-and-chat -->
 	{% endif %}
+
+</section>
 {% endblock %}

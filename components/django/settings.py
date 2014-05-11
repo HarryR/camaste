@@ -6,7 +6,7 @@ DEPLOY_ROOT = os.path.join(os.path.dirname(os.path.dirname(PROJECT_ROOT)), 'depl
 SITE_ID = 1
 DEBUG = True
 TEMPLATE_DEBUG = False
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*']  # We're sitting behind nginx
 
 
 ####################################################################
@@ -29,33 +29,39 @@ STATICFILES_FINDERS = (
     'pipeline.finders.CachedFileFinder',
 )
 
+# django-pipeline handles our CSS and JS files automagically
+# In production mode it'll minify and combine them
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
-    
 PIPELINE_CSS_COMPRESSOR = 'pipeline.compressors.csstidy.CSSTidyCompressor'
 PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.uglifyjs.UglifyJSCompressor'
-
 PIPELINE_CSS = {
     'styles': {
         'source_filenames': (
           'main.css',
         ),
-        'output_filename': 'css/main.min.css',
+        'output_filename': 'css/all.min.css',
         'extra_context': {
             'media': 'screen,projection',
         },
     },
 }
-
 PIPELINE_JS = {
     'scripts': {
         'source_filenames': (
-            'js/jquery-1.11.1.min.js',
-            'js/sockjs-0.3.4.min.js',
-            'js/stapes.min.js',
+            'js/vendor/jquery-1.11.1.min.js',
+            'js/vendor/sockjs-0.3.4.min.js',
+            'js/vendor/stapes.min.js',
             'js/main.js',
             'js/chat.js',
         ),
-        'output_filename': 'main.min.js',
+        'output_filename': 'all.min.js',
+        # Our JS is well written and doesn't do document.write
+        # So we tell the browser to defer/async it it and generally
+        # speed stuff up even more :D
+        'extra_context': {
+            'async': True,
+            'defer': True,
+        },
     }
 }
 
@@ -88,8 +94,8 @@ COMPRESS_HTML                       = TEMPLATE_DEBUG == False
 # Redis: http://niwibe.github.io/django-redis/
 #
 SESSION_EXPIRE_AT_BROWSER_CLOSE     = False
-SESSION_COOKIE_NAME = 'UNICORNS'
-CSRF_COOKIE_NAME = 'PIRATES'
+SESSION_COOKIE_NAME                 = 'UNICORNS'
+CSRF_COOKIE_NAME                    = 'PIRATES'
 CACHES = {
     'default': {
         'BACKEND': 'redis_cache.cache.RedisCache',
@@ -146,18 +152,21 @@ if DEBUG:
 
 MIDDLEWARE_CLASSES = (
 	'django.middleware.common.CommonMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',    
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
 
     # Transaction middleware is deprecated in 1.6+, use ATOMIC_REQUESTS
     #'django.middleware.transaction.TransactionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
 
+    'camaste.middleware.XForwardedForMiddleware',
+    
     # Note: our HTML minifier is better than Pipeline's
+    # The minifier is always enabled, WebKit DOM inspector has no problems
+    # and we need to make sure nothing is broken by the HTML minifier (rare?)
     'camaste.middleware.MinifyHTMLMiddleware',
-    #'pipeline.middleware.MinifyHTMLMiddleware',
 )
 
 ####################################################################

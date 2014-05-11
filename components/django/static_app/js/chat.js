@@ -79,4 +79,5 @@ var Camaste_Chat = Stapes.subclass({
 	},
 });
 
+// XXX: we shouldn't initialise here!
 new Camaste_Chat(Camaste, $('#chat'));
